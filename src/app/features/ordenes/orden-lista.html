@@ -1,0 +1,86 @@
+<section class="pagina">
+  <div class="pagina-cabecera">
+    <div>
+      <h1>Órdenes de servicio</h1>
+      <p class="subtitulo">Consulta con filtros, de la más reciente a la más antigua</p>
+    </div>
+    <a *siPermiso="Permiso.ORDEN_REGISTRAR" routerLink="/ordenes/nueva" class="btn btn-primario">+ Nueva orden</a>
+  </div>
+
+  <form class="tarjeta filtros" [formGroup]="filtros" (ngSubmit)="buscar()">
+    <div class="campo">
+      <label for="f-placa">Placa</label>
+      <input id="f-placa" class="control" formControlName="placa" placeholder="ABC-123" autocomplete="off" />
+    </div>
+    <div class="campo">
+      <label for="f-estado">Estado</label>
+      <select id="f-estado" class="control" formControlName="estado">
+        <option value="">Todos</option>
+        <option value="REGISTRADA">Registrada</option>
+        <option value="ANULADA">Anulada</option>
+      </select>
+    </div>
+    <div class="campo">
+      <label for="f-desde">Desde</label>
+      <input id="f-desde" type="date" class="control" formControlName="desde" />
+    </div>
+    <div class="campo">
+      <label for="f-hasta">Hasta</label>
+      <input id="f-hasta" type="date" class="control" formControlName="hasta" />
+    </div>
+    <div class="filtros-acciones">
+      <button type="submit" class="btn btn-primario">Buscar</button>
+      <button type="button" class="btn btn-secundario" (click)="limpiar()">Limpiar</button>
+    </div>
+  </form>
+
+  <div class="tarjeta">
+    @if (cargando()) {
+      <p class="estado-carga">Cargando órdenes…</p>
+    } @else if (error(); as mensaje) {
+      <div class="alerta alerta-error" role="alert">
+        {{ mensaje }}
+        <button type="button" class="btn btn-secundario btn-chico" (click)="buscar()">Reintentar</button>
+      </div>
+    } @else if (ordenes().length === 0) {
+      <p class="estado-vacio">No hay órdenes que coincidan con los filtros.</p>
+    } @else {
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Fecha</th>
+              <th>Placa</th>
+              <th>Cliente</th>
+              <th class="num">Km</th>
+              <th>Estado</th>
+              <th class="num">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of ordenes(); track o.id) {
+              <tr [class.fila-inactiva]="o.estado === 'ANULADA'">
+                <td><strong>{{ o.numero }}</strong></td>
+                <td>{{ o.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ o.placa }}</td>
+                <td>{{ o.clienteNombre }}</td>
+                <td class="num">{{ o.kilometraje }}</td>
+                <td>
+                  <span class="insignia" [class.insignia-ok]="o.estado === 'REGISTRADA'" [class.insignia-rojo]="o.estado === 'ANULADA'">
+                    {{ o.estado === 'REGISTRADA' ? 'Registrada' : 'Anulada' }}
+                  </span>
+                </td>
+                <td class="num">{{ o.total | currency: 'PEN' : 'S/ ' }}</td>
+                <td class="acciones">
+                  <a [routerLink]="['/ordenes', o.id]" class="btn btn-secundario btn-chico">Ver detalle</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>

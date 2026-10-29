@@ -1,0 +1,70 @@
+<section class="pagina">
+  <div class="pagina-cabecera">
+    <div>
+      <h1>Ingresos por servicio</h1>
+      <p class="subtitulo">Órdenes registradas; las anuladas no se cuentan</p>
+    </div>
+  </div>
+
+  <form class="tarjeta filtros" [formGroup]="filtros" (ngSubmit)="consultar()">
+    <div class="campo">
+      <label for="r-desde">Desde</label>
+      <input id="r-desde" type="date" class="control" formControlName="desde" />
+    </div>
+    <div class="campo">
+      <label for="r-hasta">Hasta</label>
+      <input id="r-hasta" type="date" class="control" formControlName="hasta" />
+    </div>
+    <div class="filtros-acciones">
+      <button type="submit" class="btn btn-primario">Consultar</button>
+      <button type="button" class="btn btn-secundario" (click)="limpiar()">Limpiar</button>
+    </div>
+  </form>
+
+  <div class="tarjeta">
+    @if (cargando()) {
+      <p class="estado-carga">Calculando ingresos…</p>
+    } @else if (error(); as mensaje) {
+      <div class="alerta alerta-error" role="alert">
+        {{ mensaje }}
+        <button type="button" class="btn btn-secundario btn-chico" (click)="consultar()">Reintentar</button>
+      </div>
+    } @else if (filas().length === 0) {
+      <p class="estado-vacio">No hay ingresos en el período seleccionado.</p>
+    } @else {
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Servicio</th>
+              <th class="num">Cantidad</th>
+              <th class="num">Importe</th>
+              <th class="columna-barra"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of filas(); track f.codigo) {
+              <tr>
+                <td><strong>{{ f.codigo }}</strong></td>
+                <td>{{ f.servicio }}</td>
+                <td class="num">{{ f.cantidadTotal }}</td>
+                <td class="num">{{ f.importeTotal | currency: 'PEN' : 'S/ ' }}</td>
+                <td class="columna-barra">
+                  <div class="barra"><div class="barra-relleno" [style.width.%]="(f.importeTotal / mayorImporte()) * 100"></div></div>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3"><strong>Total</strong></td>
+              <td class="num"><strong>{{ totalGeneral() | currency: 'PEN' : 'S/ ' }}</strong></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </div>
+</section>
