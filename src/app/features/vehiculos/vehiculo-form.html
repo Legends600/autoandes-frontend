@@ -1,0 +1,73 @@
+<section class="pagina pagina-angosta">
+  <div class="pagina-cabecera">
+    <div>
+      <h1>{{ esEdicion() ? 'Editar vehículo' : 'Nuevo vehículo' }}</h1>
+      <p class="subtitulo">Cada vehículo pertenece a un cliente</p>
+    </div>
+  </div>
+
+  @if (error(); as mensaje) {
+    <div class="alerta alerta-error" role="alert">{{ mensaje }}</div>
+  }
+
+  @if (cargando()) {
+    <p class="estado-carga">Cargando datos…</p>
+  } @else {
+    <form class="tarjeta formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <div class="campo">
+        <label for="placa">Placa</label>
+        <input
+          id="placa"
+          class="control"
+          formControlName="placa"
+          placeholder="ABC-123"
+          maxlength="7"
+          autocomplete="off"
+          (input)="placaEnMayusculas($event)"
+        />
+        <app-campo-error [control]="form.controls.placa" [mensajes]="{ pattern: 'La placa debe tener el formato ABC-123' }" />
+      </div>
+
+      <div class="fila-campos">
+        <div class="campo">
+          <label for="marca">Marca</label>
+          <input id="marca" class="control" formControlName="marca" autocomplete="off" />
+          <app-campo-error [control]="form.controls.marca" />
+        </div>
+        <div class="campo">
+          <label for="modelo">Modelo</label>
+          <input id="modelo" class="control" formControlName="modelo" autocomplete="off" />
+          <app-campo-error [control]="form.controls.modelo" />
+        </div>
+      </div>
+
+      <div class="fila-campos">
+        <div class="campo">
+          <label for="anio">Año</label>
+          <input id="anio" type="number" class="control" formControlName="anio" placeholder="2020" />
+          <app-campo-error
+            [control]="form.controls.anio"
+            [mensajes]="{ min: 'El año no puede ser menor que 1990', max: 'El año no puede ser mayor que 2027' }"
+          />
+        </div>
+        <div class="campo">
+          <label for="clienteId">Cliente</label>
+          <select id="clienteId" class="control" formControlName="clienteId">
+            <option [ngValue]="null" disabled>Seleccione un cliente</option>
+            @for (c of clientes(); track c.id) {
+              <option [ngValue]="c.id">{{ c.nombres }}</option>
+            }
+          </select>
+          <app-campo-error [control]="form.controls.clienteId" [mensajes]="{ required: 'Seleccione un cliente' }" />
+        </div>
+      </div>
+
+      <div class="formulario-acciones">
+        <a routerLink="/vehiculos" class="btn btn-secundario">Cancelar</a>
+        <button type="submit" class="btn btn-primario" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando…' : esEdicion() ? 'Guardar cambios' : 'Registrar vehículo' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

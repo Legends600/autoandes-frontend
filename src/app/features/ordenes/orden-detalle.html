@@ -1,0 +1,98 @@
+<section class="pagina">
+  @if (cargando()) {
+    <p class="estado-carga">Cargando orden…</p>
+  } @else if (error(); as mensaje) {
+    <div class="alerta alerta-error" role="alert">{{ mensaje }}</div>
+    <a routerLink="/ordenes" class="btn btn-secundario">Volver a las órdenes</a>
+  } @else if (orden(); as o) {
+    <div class="pagina-cabecera">
+      <div>
+        <h1>Orden {{ o.numero }}</h1>
+        <p class="subtitulo">Registrada el {{ o.fecha | date: 'dd/MM/yyyy HH:mm' }} por {{ o.usuarioRegistro }}</p>
+      </div>
+      <div class="cabecera-acciones">
+        <a routerLink="/ordenes" class="btn btn-secundario">Volver</a>
+        @if (o.estado === 'REGISTRADA') {
+          <button *siPermiso="Permiso.ORDEN_ANULAR" type="button" class="btn btn-peligro" (click)="abrirAnulacion()">
+            Anular orden
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (o.estado === 'ANULADA') {
+      <div class="alerta alerta-aviso" role="status">
+        <div><strong>Orden anulada.</strong> Motivo: {{ o.motivoAnulacion }}</div>
+      </div>
+    }
+
+    <div class="tarjeta datos-orden">
+      <div><span class="etiqueta-chica">Estado</span>
+        <span class="insignia" [class.insignia-ok]="o.estado === 'REGISTRADA'" [class.insignia-rojo]="o.estado === 'ANULADA'">
+          {{ o.estado === 'REGISTRADA' ? 'Registrada' : 'Anulada' }}
+        </span>
+      </div>
+      <div><span class="etiqueta-chica">Vehículo</span><strong>{{ o.placa }}</strong></div>
+      <div><span class="etiqueta-chica">Cliente</span><strong>{{ o.clienteNombre }}</strong></div>
+      <div><span class="etiqueta-chica">Kilometraje</span><strong>{{ o.kilometraje }} km</strong></div>
+    </div>
+
+    <div class="tarjeta">
+      <h2 class="seccion-titulo">Detalle</h2>
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Servicio</th>
+              <th class="num">Cantidad</th>
+              <th class="num">Precio unitario</th>
+              <th class="num">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of o.detalles; track d.id) {
+              <tr>
+                <td><strong>{{ d.servicioCodigo }}</strong></td>
+                <td>{{ d.servicioNombre }}</td>
+                <td class="num">{{ d.cantidad }}</td>
+                <td class="num">{{ d.precioUnitario | currency: 'PEN' : 'S/ ' }}</td>
+                <td class="num">{{ d.subtotal | currency: 'PEN' : 'S/ ' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="total-orden">
+        <span>Total</span>
+        <strong>{{ o.total | currency: 'PEN' : 'S/ ' }}</strong>
+      </div>
+    </div>
+
+    @if (anulando()) {
+      <div class="modal-fondo" (click)="cerrarAnulacion()">
+        <form class="modal" role="dialog" aria-modal="true" [formGroup]="formAnulacion" (ngSubmit)="confirmarAnulacion()" (click)="$event.stopPropagation()" novalidate>
+          <h2>Anular la orden {{ o.numero }}</h2>
+          <p>Solo se puede anular una orden registrada el mismo día. Indique el motivo (10 a 200 caracteres).</p>
+          @if (errorAnulacion(); as mensaje) {
+            <div class="alerta alerta-error" role="alert">{{ mensaje }}</div>
+          }
+          <div class="campo">
+            <label for="motivo">Motivo de la anulación</label>
+            <textarea id="motivo" class="control" rows="3" formControlName="motivo"></textarea>
+            <app-campo-error
+              [control]="formAnulacion.controls.motivo"
+              [mensajes]="{ required: 'El motivo es obligatorio', minlength: 'El motivo debe tener al menos 10 caracteres' }"
+            />
+          </div>
+          <div class="modal-acciones">
+            <button type="button" class="btn btn-secundario" (click)="cerrarAnulacion()">Cancelar</button>
+            <button type="submit" class="btn btn-peligro" [disabled]="enviando()">
+              {{ enviando() ? 'Anulando…' : 'Anular orden' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  }
+</section>
