@@ -1,0 +1,50 @@
+<section class="pagina pagina-angosta">
+  <div class="pagina-cabecera">
+    <div>
+      <h1>{{ esEdicion() ? 'Editar servicio' : 'Nuevo servicio' }}</h1>
+      <p class="subtitulo">Los datos se validan también en el servidor</p>
+    </div>
+  </div>
+
+  @if (error(); as mensaje) {
+    <div class="alerta alerta-error" role="alert">{{ mensaje }}</div>
+  }
+
+  @if (cargando()) {
+    <p class="estado-carga">Cargando servicio…</p>
+  } @else {
+    <form class="tarjeta formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <div class="campo">
+        <label for="codigo">Código</label>
+        <input id="codigo" class="control" formControlName="codigo" placeholder="SRV-009" maxlength="7" autocomplete="off" />
+        <app-campo-error [control]="form.controls.codigo" [mensajes]="{ pattern: 'El código debe tener el formato SRV-000' }" />
+      </div>
+
+      <div class="campo">
+        <label for="nombre">Nombre</label>
+        <input id="nombre" class="control" formControlName="nombre" placeholder="Cambio de bujías" autocomplete="off" />
+        <app-campo-error [control]="form.controls.nombre" />
+      </div>
+
+      <div class="fila-campos">
+        <div class="campo">
+          <label for="precio">Precio (S/)</label>
+          <input id="precio" type="number" step="0.01" class="control" formControlName="precio" />
+          <app-campo-error [control]="form.controls.precio" [mensajes]="{ min: 'El precio debe ser mayor que cero' }" />
+        </div>
+        <div class="campo">
+          <label for="duracionMin">Duración (minutos)</label>
+          <input id="duracionMin" type="number" class="control" formControlName="duracionMin" />
+          <app-campo-error [control]="form.controls.duracionMin" />
+        </div>
+      </div>
+
+      <div class="formulario-acciones">
+        <a routerLink="/servicios" class="btn btn-secundario">Cancelar</a>
+        <button type="submit" class="btn btn-primario" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando…' : esEdicion() ? 'Guardar cambios' : 'Registrar servicio' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>
