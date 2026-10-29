@@ -1,0 +1,85 @@
+<section class="pagina">
+  <div class="pagina-cabecera">
+    <div>
+      <h1>Vehículos</h1>
+      <p class="subtitulo">Vehículos de los clientes del taller</p>
+    </div>
+    <a *siPermiso="Permiso.VEHICULO_ESCRIBIR" routerLink="/vehiculos/nuevo" class="btn btn-primario">+ Nuevo vehículo</a>
+  </div>
+
+  @if (errorAccion(); as mensaje) {
+    <div class="alerta alerta-error" role="alert">{{ mensaje }}</div>
+  }
+
+  <div class="tarjeta">
+    <div class="barra-herramientas">
+      <input
+        type="search"
+        class="control control-busqueda"
+        placeholder="Buscar por placa, marca, modelo o cliente"
+        aria-label="Buscar vehículos"
+        [value]="busqueda()"
+        (input)="alBuscar($event)"
+      />
+      <select class="control control-filtro" aria-label="Filtrar por cliente" (change)="alFiltrarCliente($event)">
+        <option value="">Todos los clientes</option>
+        @for (c of clientes(); track c.id) {
+          <option [value]="c.id" [selected]="c.id === clienteFiltro()">{{ c.nombres }}</option>
+        }
+      </select>
+    </div>
+
+    @if (cargando()) {
+      <p class="estado-carga">Cargando vehículos…</p>
+    } @else if (errorCarga(); as mensaje) {
+      <div class="alerta alerta-error" role="alert">
+        {{ mensaje }}
+        <button type="button" class="btn btn-secundario btn-chico" (click)="cargar()">Reintentar</button>
+      </div>
+    } @else if (filtrados().length === 0) {
+      <p class="estado-vacio">No hay vehículos que coincidan con la búsqueda.</p>
+    } @else {
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Placa</th>
+              <th>Marca</th>
+              <th>Modelo</th>
+              <th class="num">Año</th>
+              <th>Cliente</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of filtrados(); track v.id) {
+              <tr>
+                <td><strong>{{ v.placa }}</strong></td>
+                <td>{{ v.marca }}</td>
+                <td>{{ v.modelo }}</td>
+                <td class="num">{{ v.anio }}</td>
+                <td>{{ v.clienteNombre }}</td>
+                <td class="acciones">
+                  <ng-container *siPermiso="Permiso.VEHICULO_ESCRIBIR">
+                    <a [routerLink]="['/vehiculos', v.id, 'editar']" class="btn btn-secundario btn-chico">Editar</a>
+                    <button type="button" class="btn btn-peligro-suave btn-chico" (click)="pedirEliminar(v)">Eliminar</button>
+                  </ng-container>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  @if (porEliminar(); as vehiculo) {
+    <app-confirmar-dialogo
+      titulo="Eliminar vehículo"
+      [mensaje]="'¿Eliminar el vehículo ' + vehiculo.placa + ' de ' + vehiculo.clienteNombre + '?'"
+      textoConfirmar="Eliminar"
+      (confirmado)="confirmarEliminar()"
+      (cancelado)="porEliminar.set(null)"
+    />
+  }
+</section>
