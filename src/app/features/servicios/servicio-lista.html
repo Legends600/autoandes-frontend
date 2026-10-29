@@ -1,0 +1,90 @@
+<section class="pagina">
+  <div class="pagina-cabecera">
+    <div>
+      <h1>Servicios</h1>
+      <p class="subtitulo">Catálogo de servicios del taller</p>
+    </div>
+    <a *siPermiso="Permiso.SERVICIO_ESCRIBIR" routerLink="/servicios/nuevo" class="btn btn-primario">+ Nuevo servicio</a>
+  </div>
+
+  @if (errorAccion(); as mensaje) {
+    <div class="alerta alerta-error" role="alert">{{ mensaje }}</div>
+  }
+
+  <div class="tarjeta">
+    <div class="barra-herramientas">
+      <input
+        type="search"
+        class="control control-busqueda"
+        placeholder="Buscar por código o nombre"
+        aria-label="Buscar servicios"
+        [value]="busqueda()"
+        (input)="alBuscar($event)"
+      />
+    </div>
+
+    @if (cargando()) {
+      <p class="estado-carga">Cargando servicios…</p>
+    } @else if (errorCarga(); as mensaje) {
+      <div class="alerta alerta-error" role="alert">
+        {{ mensaje }}
+        <button type="button" class="btn btn-secundario btn-chico" (click)="cargar()">Reintentar</button>
+      </div>
+    } @else if (filtrados().length === 0) {
+      <p class="estado-vacio">
+        {{ busqueda() ? 'Ningún servicio coincide con la búsqueda.' : 'Todavía no hay servicios registrados.' }}
+      </p>
+    } @else {
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th class="num">Precio</th>
+              <th class="num">Duración</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of filtrados(); track s.id) {
+              <tr [class.fila-inactiva]="!s.activo">
+                <td><strong>{{ s.codigo }}</strong></td>
+                <td>{{ s.nombre }}</td>
+                <td class="num">S/ {{ s.precio | number: '1.2-2' }}</td>
+                <td class="num">{{ s.duracionMin }} min</td>
+                <td>
+                  <span class="insignia" [class.insignia-ok]="s.activo" [class.insignia-gris]="!s.activo">
+                    {{ s.activo ? 'Activo' : 'De baja' }}
+                  </span>
+                </td>
+                <td class="acciones">
+                  <ng-container *siPermiso="Permiso.SERVICIO_ESCRIBIR">
+                    <a [routerLink]="['/servicios', s.id, 'editar']" class="btn btn-secundario btn-chico">Editar</a>
+                    @if (s.activo) {
+                      <button type="button" class="btn btn-secundario btn-chico" (click)="pedir('baja', s)">Dar de baja</button>
+                    } @else {
+                      <button type="button" class="btn btn-secundario btn-chico" (click)="reactivar(s)">Reactivar</button>
+                    }
+                    <button type="button" class="btn btn-peligro-suave btn-chico" (click)="pedir('eliminar', s)">Eliminar</button>
+                  </ng-container>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  @if (pendiente(); as accion) {
+    <app-confirmar-dialogo
+      [titulo]="accion.tipo === 'baja' ? 'Dar de baja' : 'Eliminar servicio'"
+      [mensaje]="mensajeConfirmacion()"
+      [textoConfirmar]="accion.tipo === 'baja' ? 'Dar de baja' : 'Eliminar'"
+      (confirmado)="confirmar()"
+      (cancelado)="cancelar()"
+    />
+  }
+</section>
