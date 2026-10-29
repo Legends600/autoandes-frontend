@@ -1,0 +1,112 @@
+<section class="pagina">
+  <div class="pagina-cabecera">
+    <div>
+      <h1>Nueva orden de servicio</h1>
+      <p class="subtitulo">El total oficial lo calcula el servidor; aquí se muestra como ayuda</p>
+    </div>
+  </div>
+
+  @if (error(); as mensaje) {
+    <div class="alerta alerta-error" role="alert">
+      <div>
+        <strong>{{ mensaje }}</strong>
+        @for (texto of erroresSueltos(); track texto) {
+          <div>{{ texto }}</div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (cargando()) {
+    <p class="estado-carga">Cargando vehículos y servicios…</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="registrar()" novalidate>
+      <div class="tarjeta formulario">
+        <h2 class="seccion-titulo">Cabecera</h2>
+        <div class="fila-campos">
+          <div class="campo">
+            <label for="vehiculoId">Vehículo</label>
+            <select id="vehiculoId" class="control" formControlName="vehiculoId">
+              <option [ngValue]="null" disabled>Seleccione un vehículo</option>
+              @for (v of vehiculos(); track v.id) {
+                <option [ngValue]="v.id">{{ v.placa }} — {{ v.clienteNombre }}</option>
+              }
+            </select>
+            <app-campo-error [control]="form.controls.vehiculoId" [mensajes]="{ required: 'Seleccione un vehículo' }" />
+          </div>
+          <div class="campo">
+            <label for="kilometraje">Kilometraje</label>
+            <input id="kilometraje" type="number" min="0" class="control" formControlName="kilometraje" />
+            <app-campo-error [control]="form.controls.kilometraje" [mensajes]="{ min: 'El kilometraje no puede ser negativo' }" />
+          </div>
+        </div>
+      </div>
+
+      <div class="tarjeta formulario">
+        <div class="seccion-cabecera">
+          <h2 class="seccion-titulo">Detalle ({{ lineas.length }} de {{ maxLineas }} líneas)</h2>
+          <button type="button" class="btn btn-secundario btn-chico" [disabled]="lineas.length >= maxLineas" (click)="agregarLinea()">
+            + Agregar línea
+          </button>
+        </div>
+
+        @if (lineas.length === 0) {
+          <p class="estado-vacio">Agregue al menos un servicio a la orden.</p>
+        }
+        @if (lineas.errors?.['minlength'] && lineas.touched) {
+          <small class="campo-error" role="alert">La orden debe tener al menos 1 servicio.</small>
+        }
+
+        <div formArrayName="detalles" class="lineas">
+          @for (linea of lineas.controls; track linea; let i = $index) {
+            <div class="linea" [formGroupName]="i">
+              <div class="campo">
+                <label [for]="'servicio-' + i">Servicio</label>
+                <select [id]="'servicio-' + i" class="control" formControlName="servicioId">
+                  <option [ngValue]="null" disabled>Seleccione un servicio</option>
+                  @for (s of serviciosActivos(); track s.id) {
+                    <option [ngValue]="s.id" [disabled]="usadoEnOtraLinea(s.id, i)">
+                      {{ s.codigo }} — {{ s.nombre }}
+                    </option>
+                  }
+                </select>
+                <app-campo-error [control]="linea.controls.servicioId" [mensajes]="{ required: 'Seleccione un servicio' }" />
+              </div>
+              <div class="campo campo-corto">
+                <label [for]="'cantidad-' + i">Cantidad</label>
+                <input [id]="'cantidad-' + i" type="number" min="1" max="5" class="control" formControlName="cantidad" />
+                <app-campo-error
+                  [control]="linea.controls.cantidad"
+                  [mensajes]="{ min: 'Mínimo 1', max: 'Máximo 5', required: 'Obligatoria' }"
+                />
+              </div>
+              <div class="linea-importe">
+                <span class="etiqueta-chica">Precio</span>
+                <span>{{ resumenLineas()[i]?.precio === null ? '—' : (resumenLineas()[i]?.precio | currency: 'PEN' : 'S/ ') }}</span>
+              </div>
+              <div class="linea-importe">
+                <span class="etiqueta-chica">Subtotal</span>
+                <strong>{{ resumenLineas()[i]?.subtotal | currency: 'PEN' : 'S/ ' }}</strong>
+              </div>
+              <button type="button" class="btn btn-peligro-suave btn-chico linea-quitar" (click)="quitarLinea(i)" [attr.aria-label]="'Quitar la línea ' + (i + 1)">
+                Quitar
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="total-orden">
+          <span>Total</span>
+          <strong>{{ total() | currency: 'PEN' : 'S/ ' }}</strong>
+        </div>
+      </div>
+
+      <div class="formulario-acciones">
+        <a routerLink="/ordenes" class="btn btn-secundario">Cancelar</a>
+        <button type="submit" class="btn btn-primario" [disabled]="enviando()">
+          {{ enviando() ? 'Registrando…' : 'Registrar orden' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>
